@@ -1,0 +1,23 @@
+substitutions:
+  _SERVICE: gametuner-enrich-bad-sink
+  _ARTIFACT_REPOSITORY: gametuner-pipeline-services
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REPOSITORY/$_SERVICE", "."]
+
+  - name: "gcr.io/cloud-builders/docker"
+    dir: "/workspace/dockerfile"
+    args: [ "push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REPOSITORY/$_SERVICE" ]
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args: [ "gcloud", "compute", "instance-groups", "managed", "rolling-action", "replace",
+            "$_SERVICE-mig", "--project=$PROJECT_ID",
+            "--max-unavailable=0", "--max-surge=3", "--region=$LOCATION" ]
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args: [ "gcloud", "compute", "instance-groups", "managed", "wait-until",
+            "$_SERVICE-mig", "--stable", "--project=$PROJECT_ID",
+            "--region=$LOCATION", "--timeout=300" ]
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/cloudbuild@$PROJECT_ID.iam.gserviceaccount.com'
+options:
+  logging: CLOUD_LOGGING_ONLY

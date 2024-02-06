@@ -1,0 +1,4 @@
+google-cloud-bigquery==3.3.2
+google-cloud-pubsub==2.15.0
+opencensus-ext-stackdriver==0.8.0
+opencensus==0.10.0
